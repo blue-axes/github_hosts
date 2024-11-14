@@ -31,7 +31,7 @@ func main() {
 		timeout  = time.Second * 30
 	)
 	flag.StringVar(&hostsUrl, "url", hostsUrl, "the hosts url")
-	flag.StringVar(&mode, "mode", mode, "the rewrite mode. append or rewrite")
+	flag.StringVar(&mode, "mode", mode, "the rewrite mode. append or rewrite or clear")
 	flag.Parse()
 	builtinHostUrlList = append([]string{hostsUrl}, builtinHostUrlList...)
 	var (
@@ -82,6 +82,31 @@ func main() {
 			time.Sleep(time.Second * 10)
 			return
 		}
+	case "clear":
+		oldList := parseLocalHostsFile()
+		newList := make([][]string, 0, len(oldList))
+		ignore := false
+		for _, item := range oldList {
+			if len(item) == 1 && item[0] == startMark {
+				ignore = true
+				continue
+			}
+			if len(item) == 1 && item[0] == endMark {
+				ignore = false
+				continue
+			}
+			if ignore {
+				continue
+			}
+			newList = append(newList, item)
+		}
+		err := writeLocalHostsFile(newList)
+		if err != nil {
+			fmt.Printf("write hosts file err:%s\n", err)
+			time.Sleep(time.Second * 10)
+			return
+		}
+
 	case "rewrite":
 		fallthrough
 	default:
